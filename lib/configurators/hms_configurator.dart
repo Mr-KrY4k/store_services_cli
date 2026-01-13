@@ -53,6 +53,7 @@ class HmsConfigurator extends BaseConfigurator {
     await _modifyManifest();
     await _modifyPubspec();
     await _modifyProguard();
+    print('⚠️  Не забудьте добавить android/app/agconnect-services.json');
   }
 
   Future<void> remove() async {

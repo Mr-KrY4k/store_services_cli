@@ -19,6 +19,10 @@ class GmsConfigurator extends BaseConfigurator {
     await _modifyAppBuildGradle();
     await _modifyManifest();
     await _modifyPubspec();
+    print('⚠️  Не забудьте добавить android/app/google-services.json');
+    print(
+      '⚠️  Не забудьте добавить иконку: android/app/src/main/res/drawable/firebase_icon_push.png',
+    );
   }
 
   Future<void> remove() async {
