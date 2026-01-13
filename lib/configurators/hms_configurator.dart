@@ -180,9 +180,9 @@ class HmsConfigurator extends BaseConfigurator {
           .replaceFirst('\n        $_mavenRepo', '')
           .replaceFirst(_mavenRepo, '');
 
-      // Remove resolution strategy
+      // Remove resolution strategy (handle potential leading newline)
       newContent = newContent
-          .replaceFirst('$_resolutionStrategySpy\n    ', '')
+          .replaceFirst('\n$_resolutionStrategySpy', '')
           .replaceFirst(_resolutionStrategySpy, '');
 
       // Remove plugin
@@ -275,12 +275,17 @@ subprojects {
       // Remove AIDL Fix
       const aidlFix = '''
 
-// Fix for Huawei Ads AIDL compilation
+// Fix for Huawei Ads AIDL compilation per hms-flutter-plugin/#396
 subprojects {
-    afterEvaluate {
-        if (project.name == "huawei_ads" || project.group.toString() == "com.huawei.hms.flutter.ads") {
-            val android = extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+    if (project.name == "huawei_ads" || project.group.toString() == "com.huawei.hms.flutter.ads") {
+        val configureAidl = {
+            val android = project.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
             android?.buildFeatures?.aidl = true
+        }
+        if (project.state.executed) {
+            configureAidl()
+        } else {
+            project.afterEvaluate { configureAidl() }
         }
     }
 }
@@ -291,7 +296,9 @@ subprojects {
         // Fallback regex if needed
         if (newContent.contains('Fix for Huawei Ads AIDL compilation')) {
           newContent = newContent.replaceAll(
-            RegExp(r'\/\/ Fix for Huawei Ads AIDL compilation(.|\n)*?}\n}\n'),
+            RegExp(
+              r'(\n)*\/\/ Fix for Huawei Ads AIDL compilation(.|\n)*?}\n}\n',
+            ),
             '',
           );
         }

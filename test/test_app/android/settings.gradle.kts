@@ -13,7 +13,9 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = uri("https://developer.huawei.com/repo/") }
+        maven { url = uri("https://developer.huawei.com/repo/") 
+        }
+    }
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "com.huawei.agconnect") {
@@ -21,15 +23,6 @@ pluginManagement {
             }
         }
     }
-
-
-
-
-
-
-
-}
-
 }
 
 plugins {
