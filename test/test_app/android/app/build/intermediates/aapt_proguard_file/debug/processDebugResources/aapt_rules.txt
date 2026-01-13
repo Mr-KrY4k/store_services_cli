@@ -1,0 +1,113 @@
+-keep class android.app.Application { <init>(); }
+-keep class androidx.core.app.CoreComponentFactory { <init>(); }
+-keep class androidx.profileinstaller.ProfileInstallReceiver { <init>(); }
+-keep class androidx.startup.InitializationProvider { <init>(); }
+-keep class com.centr.nk.zaim.na.card.ru.MainActivity { <init>(); }
+-keep class com.google.android.datatransport.runtime.backends.TransportBackendDiscovery { <init>(); }
+-keep class com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver { <init>(); }
+-keep class com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService { <init>(); }
+-keep class com.google.android.gms.common.api.GoogleApiActivity { <init>(); }
+-keep class com.google.android.gms.measurement.AppMeasurementJobService { <init>(); }
+-keep class com.google.android.gms.measurement.AppMeasurementReceiver { <init>(); }
+-keep class com.google.android.gms.measurement.AppMeasurementService { <init>(); }
+-keep class com.google.firebase.components.ComponentDiscoveryService { <init>(); }
+-keep class com.google.firebase.iid.FirebaseInstanceIdReceiver { <init>(); }
+-keep class com.google.firebase.messaging.FirebaseMessagingService { <init>(); }
+-keep class com.google.firebase.provider.FirebaseInitProvider { <init>(); }
+-keep class com.huawei.agconnect.core.ServiceDiscovery { <init>(); }
+-keep class com.huawei.agconnect.core.provider.AGConnectInitializeProvider { <init>(); }
+-keep class com.huawei.hms.aaid.InitProvider { <init>(); }
+-keep class com.huawei.hms.activity.BridgeActivity { <init>(); }
+-keep class com.huawei.hms.activity.EnableServiceActivity { <init>(); }
+-keep class com.huawei.hms.ads.vast.openalliance.ad.activity.LandingPageActivity { <init>(); }
+-keep class com.huawei.hms.flutter.ads.installreferrer.PpsChannelInfoService { <init>(); }
+-keep class com.huawei.hms.flutter.push.backgroundmessaging.BackgroundMessagingService { <init>(); }
+-keep class com.huawei.hms.flutter.push.hms.FlutterHmsMessageService { <init>(); }
+-keep class com.huawei.hms.flutter.push.receiver.BackgroundMessageBroadcastReceiver { <init>(); }
+-keep class com.huawei.hms.flutter.push.receiver.local.HmsLocalNotificationActionsReceiver { <init>(); }
+-keep class com.huawei.hms.flutter.push.receiver.local.HmsLocalNotificationBootEventReceiver { <init>(); }
+-keep class com.huawei.hms.flutter.push.receiver.local.HmsLocalNotificationScheduledPublisher { <init>(); }
+-keep class com.huawei.hms.support.api.push.PushMsgReceiver { <init>(); }
+-keep class com.huawei.hms.support.api.push.PushProvider { <init>(); }
+-keep class com.huawei.hms.support.api.push.PushReceiver { <init>(); }
+-keep class com.huawei.hms.support.api.push.TransActivity { <init>(); }
+-keep class com.huawei.hms.support.api.push.service.HmsMsgService { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.AgProtocolActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.ComplianceActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.FeedbackActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.PPSBridgeActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.PPSLauncherActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.PPSNotificationActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.PPSShareActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.activity.TemplateStubActivity { <init>(); }
+-keep class com.huawei.openalliance.ad.provider.PPSECProvider { <init>(); }
+-keep class io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingBackgroundService { <init>(); }
+-keep class io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingInitProvider { <init>(); }
+-keep class io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingReceiver { <init>(); }
+-keep class io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService { <init>(); }
+-keep class android.widget.ProgressBar { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.AppDownloadButton { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.ChoicesView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.nativead.MediaView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.nativead.NativeView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.splash.ChoicesView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.vast.openalliance.ad.webview.PPSWebView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.hms.ads.vast.player.ui.custombutton.AdSkipView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.compliance.ComplianceView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.feedback.FeedbackView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.feedback.FlowLayoutView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.AutoScaleSizeRelativeLayout { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.AutoSizeTextView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.LinkedSurfaceView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.NativeVideoControlPanel { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSCircleProgressBar { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSLabelSourceView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSLabelView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSNativeView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashAdSourceView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashLabelView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashProView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashSwipeClickView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashSwipeView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashTwistClickView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSSplashTwistView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.PPSWLSView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.RoundLinearLayout { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.ScanningRelativeLayout { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.ScanningView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.VideoView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.dsa.DomesticDsaSplashView { <init>(android.content.Context, android.util.AttributeSet); }
+
+-keep class com.huawei.openalliance.ad.views.dsa.DomesticDsaView { <init>(android.content.Context, android.util.AttributeSet); }
+

@@ -1,6 +1,7 @@
 
 allprojects {
     repositories {
+        maven(url = "https://developer.huawei.com/repo/")
         google()
         mavenCentral()
     }
@@ -8,13 +9,20 @@ allprojects {
 
 buildscript {
     repositories {
+        maven(url = "https://developer.huawei.com/repo/")
+        
+        
+        
+        
+        
         google()
         mavenCentral()
         
         gradlePluginPortal()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.11.1")
+        classpath("com.huawei.agconnect:agcp:1.9.1.303")
+                                                classpath("com.android.tools.build:gradle:8.11.1")
                 classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.20")
     }
 }
@@ -32,3 +40,23 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
+
+
+
+
+
+
+// Fix for Huawei Ads AIDL compilation per hms-flutter-plugin/#396
+subprojects {
+    if (project.name == "huawei_ads" || project.group.toString() == "com.huawei.hms.flutter.ads") {
+        val configureAidl = {
+            val android = project.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+            android?.buildFeatures?.aidl = true
+        }
+        if (project.state.executed) {
+            configureAidl()
+        } else {
+            project.afterEvaluate { configureAidl() }
+        }
+    }
+}
