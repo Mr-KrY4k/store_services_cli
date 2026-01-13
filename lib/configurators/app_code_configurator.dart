@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 enum StoreMode { gms, hms, hybrid }
 
@@ -40,7 +41,15 @@ class AppCodeConfigurator {
       );
     }
 
-    // 2. Generate StoreService
+    // 2. Copy Interfaces
+    await _copyTemplate(
+      templatesDir,
+      'store_interfaces.dart',
+      p.join(_targetDir, 'store_interfaces.dart'),
+      packageName,
+    );
+
+    // 3. Generate StoreService
     String templateName;
     switch (mode) {
       case StoreMode.gms:

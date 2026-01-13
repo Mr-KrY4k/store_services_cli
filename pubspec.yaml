@@ -2,6 +2,7 @@ name: store_services_cli
 description: A sample command-line application.
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
+publish_to: 'none'
 
 environment:
   sdk: ^3.10.4
@@ -10,6 +11,29 @@ environment:
 dependencies:
   path: ^1.9.1
   dcli: ^8.3.0
+
+  advertising_id: ^2.7.1
+  firebase_remote_config: ^6.0.0
+  firebase_messaging: ^16.0.0
+  firebase_crashlytics: ^5.0.0
+  firebase_core: ^4.0.0
+  firebase_analytics: ^12.0.0
+
+  huawei_push:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-push
+  huawei_ads:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-ads
+  huawei_hmsavailability:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-availability
 
 dev_dependencies:
   lints: ^6.0.0

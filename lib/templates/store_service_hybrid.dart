@@ -1,5 +1,9 @@
+import 'package:huawei_hmsavailability/huawei_hmsavailability.dart';
 import 'services/firebase_service.dart';
 import 'services/hms_service.dart';
+import 'store_interfaces.dart';
+
+export 'store_interfaces.dart';
 
 class StoreService {
   static final StoreService _instance = StoreService._internal();
@@ -10,19 +14,41 @@ class StoreService {
 
   StoreService._internal();
 
+  // Public Interfaces
+  late final StoreAnalytics analytics;
+  late final StorePush push;
+  late final StoreAds ads;
+  late final StoreRemoteConfig remoteConfig;
+
+  bool _isHms = false;
+
   Future<void> init() async {
-    // In Hybrid mode, we might want to initialize both or check availability.
-    // For now, initializing both.
+    // Check HMS Availability
     try {
-      await FirebaseService().init();
+      final hmsApi = HmsApiAvailability();
+      final result = await hmsApi.isHMSAvailable();
+      // 0 means SUCCESS (HMS Available)
+      _isHms = result == 0;
+      print('🔍 HMS Available: \$_isHms (Code: \$result)');
     } catch (e) {
-      print('Firebase Init Error: $e');
+      print('⚠️ HmsApiAvailability check failed: \$e');
+      _isHms = false;
     }
 
-    try {
+    if (_isHms) {
       await HmsService().init();
-    } catch (e) {
-      print('HMS Init Error: $e');
+      analytics = HmsAnalyticsImpl();
+      push = HmsPushImpl();
+      ads = HmsAdsImpl();
+      remoteConfig = HmsRemoteConfigImpl();
+      print('✅ StoreService initialized in HMS Mode');
+    } else {
+      await FirebaseService().init();
+      analytics = FirebaseAnalyticsImpl();
+      push = FirebasePushImpl();
+      ads = FirebaseAdsImpl();
+      remoteConfig = FirebaseRemoteConfigImpl();
+      print('✅ StoreService initialized in GMS Mode');
     }
   }
 }
