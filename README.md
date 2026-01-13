@@ -5,19 +5,26 @@
 
 ## Установка и Запуск
 
-Убедитесь, что у вас установлен Dart SDK.
+### Способ 1: Прямая установка из Git (Рекомендуемый)
+Установите утилиту глобально прямо из репозитория:
 
-1. Откройте терминал в корне вашего Flutter-проекта.
-2. Запустите CLI, указав путь к этому пакету, или скомпилируйте его.
-
-**Запуск из исходников:**
 ```bash
-dart run path/to/store_services_cli
+dart pub global activate --source git https://github.com/Mr-KrY4k/store_services_cli.git --git-ref dev
 ```
 
-**Если CLI находится внутри проекта:**
+После этого в терминале будет доступна команда `store_services_cli`.
+
+### Способ 2: Локальная установка (Для разработки)
+Если вы скачали исходный код утилиты:
+
 ```bash
-dart run bin/store_services_cli.dart
+dart pub global activate --source path /path/to/store_services_cli
+```
+
+### Запуск
+Перейдите в корень вашего Flutter-проекта и выполните:
+```bash
+store_services_cli
 ```
 
 ## Использование
