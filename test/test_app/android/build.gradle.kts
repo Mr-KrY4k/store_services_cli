@@ -10,13 +10,17 @@ allprojects {
 buildscript {
     repositories {
         maven(url = "https://developer.huawei.com/repo/")
+        
+        
+        
+        
         google()
         mavenCentral()
         gradlePluginPortal()
     }
     dependencies {
         classpath("com.huawei.agconnect:agcp:1.9.1.303")
-                classpath("com.android.tools.build:gradle:8.11.1")
+                                        classpath("com.android.tools.build:gradle:8.11.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.20")
     }
 }
