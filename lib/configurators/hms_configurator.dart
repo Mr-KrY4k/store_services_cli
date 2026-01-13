@@ -89,44 +89,68 @@ class HmsConfigurator extends BaseConfigurator {
   }
 
   Future<void> _modifySettingsGradle() async {
+    // Extract versions to preserve them
+    String agpVersion = '8.11.1';
+    String kotlinVersion = '2.2.20';
+    String flutterLoaderVersion = '1.0.0';
+
+    if (File(settingsGradle).existsSync()) {
+      final content = File(settingsGradle).readAsStringSync();
+
+      final agpMatch = RegExp(
+        r'id\("com.android.application"\) version "([^"]+)"',
+      ).firstMatch(content);
+      if (agpMatch != null) agpVersion = agpMatch.group(1)!;
+
+      final kotlinMatch = RegExp(
+        r'id\("org.jetbrains.kotlin.android"\) version "([^"]+)"',
+      ).firstMatch(content);
+      if (kotlinMatch != null) kotlinVersion = kotlinMatch.group(1)!;
+
+      final loaderMatch = RegExp(
+        r'id\("dev.flutter.flutter-plugin-loader"\) version "([^"]+)"',
+      ).firstMatch(content);
+      if (loaderMatch != null) flutterLoaderVersion = loaderMatch.group(1)!;
+    }
+
     await modifyFile(settingsGradle, 'Settings Gradle', (content) async {
-      var newContent = content;
-      bool changed = false;
+      return '''
+pluginManagement {
+    val flutterSdkPath = run {
+        val properties = java.util.Properties()
+        file("local.properties").inputStream().use { properties.load(it) }
+        val flutterSdkPath = properties.getProperty("flutter.sdk")
+        require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
+        flutterSdkPath
+    }
 
-      // 1. Add Resolution Strategy (Start of pluginManagement or before repositories)
-      if (!newContent.contains('com.huawei.agconnect:agcp')) {
-        if (newContent.contains('repositories {')) {
-          newContent = newContent.replaceFirst(
-            'repositories {',
-            '$_resolutionStrategySpy\n    repositories {',
-          );
-          changed = true;
+    includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url = uri("https://developer.huawei.com/repo/") }
+    }
+
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "com.huawei.agconnect") {
+                useModule("com.huawei.agconnect:agcp:$_agconnectVersion")
+            }
         }
-      }
+    }
+}
 
-      // 2. Add Repository
-      if (!newContent.contains('developer.huawei.com/repo')) {
-        if (newContent.contains('repositories {')) {
-          newContent = newContent.replaceFirst(
-            'repositories {',
-            'repositories {\n        $_mavenRepo',
-          );
-          changed = true;
-        }
-      }
+plugins {
+    id("dev.flutter.flutter-plugin-loader") version "$flutterLoaderVersion"
+    id("com.android.application") version "$agpVersion" apply false
+    id("org.jetbrains.kotlin.android") version "$kotlinVersion" apply false
+    id("com.huawei.agconnect") version "$_agconnectVersion" apply false
+}
 
-      // 2. Add Plugin (if plugins block exists here)
-      if (!newContent.contains(_agconnectPluginId)) {
-        if (newContent.contains('plugins {')) {
-          newContent = newContent.replaceFirst(
-            'plugins {',
-            'plugins {\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
-          );
-          changed = true;
-        }
-      }
-
-      return changed ? newContent : null;
+include(":app")
+''';
     });
   }
 
@@ -152,44 +176,168 @@ class HmsConfigurator extends BaseConfigurator {
   }
 
   Future<void> _modifyRootBuildGradle() async {
+    // 1. Extract versions from settings.gradle.kts
+    String agpVersion = '8.11.1'; // fallback
+    String kotlinVersion = '2.2.20'; // fallback
+
+    if (File(settingsGradle).existsSync()) {
+      final settingsContent = File(settingsGradle).readAsStringSync();
+      final agpMatch = RegExp(
+        r'id\("com.android.application"\) version "([^"]+)"',
+      ).firstMatch(settingsContent);
+      if (agpMatch != null) agpVersion = agpMatch.group(1)!;
+
+      final kotlinMatch = RegExp(
+        r'id\("org.jetbrains.kotlin.android"\) version "([^"]+)"',
+      ).firstMatch(settingsContent);
+      if (kotlinMatch != null) kotlinVersion = kotlinMatch.group(1)!;
+    }
+
     await modifyFile(rootBuildGradle, 'Root Gradle', (content) async {
-      var newContent = content;
-      bool changed = false;
+      // We will mostly OVERWRITE or ensure the structure matches the user request.
+      // User want: imports, allprojects, buildscript, dir, subprojects, clean.
 
-      // 1. Add Repo to allprojects (if exists)
-      if (newContent.contains('allprojects {')) {
-        if (!newContent.contains('developer.huawei.com/repo')) {
-          newContent = newContent.replaceFirst(
-            'repositories {',
-            'repositories {\n        $_mavenRepoShort',
-          );
-          changed = true;
-        }
-      }
+      // If the file is already roughly in this structure (has buildscript), we might just ensure HMS lines.
+      // But user said "sdelai tak chtoby poluchilos tak".
+      // To be safe and avoid duplicates, I will reconstruct the file.
 
-      // 2. Add Plugin (only if plugins block exists HERE)
-      if (!newContent.contains(_agconnectPluginId)) {
-        if (newContent.contains('plugins {')) {
-          newContent = newContent.replaceFirst(
-            'plugins {',
-            'plugins {\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
-          );
-          changed = true;
+      const template = '''
+import org.gradle.api.file.Directory
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "https://developer.huawei.com/repo/")
+    }
+}
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "https://developer.huawei.com/repo/")
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:AGP_VERSION")
+        classpath("com.huawei.agconnect:agcp:HMS_VERSION")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:KOTLIN_VERSION")
+    }
+}
+
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
+}
+
+// Fix for Huawei Ads AIDL compilation per hms-flutter-plugin/#396
+subprojects {
+    if (project.name == "huawei_ads" || project.group.toString() == "com.huawei.hms.flutter.ads") {
+        val configureAidl = {
+            val android = project.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+            android?.buildFeatures?.aidl = true
         }
-      }
-      return changed ? newContent : null;
+        if (project.state.executed) {
+            configureAidl()
+        } else {
+            project.afterEvaluate { configureAidl() }
+        }
+    }
+}
+''';
+
+      return template
+          .replaceFirst('AGP_VERSION', agpVersion)
+          .replaceFirst('HMS_VERSION', _agconnectVersion)
+          .replaceFirst('KOTLIN_VERSION', kotlinVersion);
     });
   }
 
   Future<void> _removeRootBuildGradle() async {
     await modifyFile(rootBuildGradle, 'Root Gradle', (content) async {
-      var newContent = content
+      var newContent = content;
+
+      // Remove HMS Repo from allprojects
+      newContent = newContent
           .replaceFirst('\n        $_mavenRepoShort', '')
           .replaceFirst(_mavenRepoShort, '');
+
+      // Remove HMS Plugin from plugins (if legacy style or inside plugins {})
       newContent = newContent.replaceFirst(
         '\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
         '',
       );
+
+      // Remove AIDL Fix
+      const aidlFix = '''
+
+// Fix for Huawei Ads AIDL compilation
+subprojects {
+    afterEvaluate {
+        if (project.name == "huawei_ads" || project.group.toString() == "com.huawei.hms.flutter.ads") {
+            val android = extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+            android?.buildFeatures?.aidl = true
+        }
+    }
+}
+''';
+      if (newContent.contains('Fix for Huawei Ads AIDL compilation')) {
+        // Try exact match first
+        newContent = newContent.replaceFirst(aidlFix, '');
+        // Fallback regex if needed
+        if (newContent.contains('Fix for Huawei Ads AIDL compilation')) {
+          newContent = newContent.replaceAll(
+            RegExp(r'\/\/ Fix for Huawei Ads AIDL compilation(.|\n)*?}\n}\n'),
+            '',
+          );
+        }
+      }
+
+      // Remove imported Directory class if present
+      newContent = newContent.replaceFirst(
+        'import org.gradle.api.file.Directory\n',
+        '',
+      );
+      newContent = newContent.replaceFirst(
+        'import org.gradle.api.file.Directory',
+        '',
+      );
+
+      // Remove buildscript block (Aggressive removal if it looks like ours)
+      // We look for buildscript that contains our classpath
+      if (newContent.contains('buildscript {') &&
+          newContent.contains('com.huawei.agconnect:agcp')) {
+        // We'll remove the HMS classpath
+        newContent = newContent.replaceFirst(
+          RegExp(r'classpath\("com.huawei.agconnect:agcp:[^"]+"\)\n?'),
+          '',
+        );
+        // usage of maven repo in buildscript
+        newContent = newContent.replaceFirst(
+          RegExp(r'maven\(url = "https://developer.huawei.com/repo/"\)\n?'),
+          '',
+        );
+
+        // If we want to completely revert the "Legacy Buildscript" injection:
+        // We should check if we should remove the whole block.
+        // Given the user manually added it, maybe they want it gone.
+        // But I can't be 100% sure without a parser.
+        // I will leave it at removing HMS specific lines inside it for safety, unless I can match the template.
+
+        // Let's try to match the template keys
+        // If it contains "google()", "mavenCentral()", "gradlePluginPortal()" and dependencies block...
+        // I'll stick to removing hms lines. If empty lines remain, so be it, safer than deleting user's custom buildscript.
+      }
+
       return newContent;
     });
   }
@@ -201,7 +349,15 @@ class HmsConfigurator extends BaseConfigurator {
 
       // 1. Apply Plugin
       if (!newContent.contains('id("$_agconnectPluginId")')) {
-        if (newContent.contains('plugins {')) {
+        // Try to add after com.android.application to ensure correct order
+        if (newContent.contains('id("com.android.application")')) {
+          newContent = newContent.replaceFirst(
+            'id("com.android.application")',
+            'id("com.android.application")\n    id("$_agconnectPluginId")',
+          );
+          changed = true;
+        } else if (newContent.contains('plugins {')) {
+          // Fallback if android plugin not found explicitly (rare)
           newContent = newContent.replaceFirst(
             'plugins {',
             'plugins {\n    id("$_agconnectPluginId")',

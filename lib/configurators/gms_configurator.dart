@@ -103,7 +103,15 @@ class GmsConfigurator extends BaseConfigurator {
 
       // 1. Apply Plugins
       if (!newContent.contains('id("$_gmsPluginId")')) {
-        if (newContent.contains('plugins {')) {
+        // Try to add after com.android.application to ensure correct order
+        if (newContent.contains('id("com.android.application")')) {
+          newContent = newContent.replaceFirst(
+            'id("com.android.application")',
+            'id("com.android.application")\n    id("$_gmsPluginId")\n    id("$_crashlyticsPluginId")',
+          );
+          changed = true;
+        } else if (newContent.contains('plugins {')) {
+          // Fallback
           newContent = newContent.replaceFirst(
             'plugins {',
             'plugins {\n    id("$_gmsPluginId")\n    id("$_crashlyticsPluginId")',
