@@ -6,8 +6,13 @@
 ## Установка и Запуск
 
 ### Способ 1: Прямая установка из Git (Рекомендуемый)
-Установите утилиту глобально прямо из репозитория:
 
+**Стабильная версия (из ветки `main`):**
+```bash
+dart pub global activate --source git https://github.com/Mr-KrY4k/store_services_cli.git
+```
+
+**Версия в разработке (из ветки `dev`):**
 ```bash
 dart pub global activate --source git https://github.com/Mr-KrY4k/store_services_cli.git --git-ref dev
 ```
