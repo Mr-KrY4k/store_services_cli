@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63931685426",
+    "project_id": "id711-91244",
+    "storage_bucket": "id711-91244.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63931685426:android:8ab2049f1f71bcea14ba2b",
+        "android_client_info": {
+          "package_name": "com.centr.nk.zaim.na.card.ru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXBP-dN6quGzdRHM9ZJNARXSLyn0mmvLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

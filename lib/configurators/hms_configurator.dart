@@ -81,15 +81,35 @@ class HmsConfigurator extends BaseConfigurator {
           changed = true;
         }
       }
+
+      // 2. Add Plugin (if plugins block exists here)
+      if (!newContent.contains(_agconnectPluginId)) {
+        if (newContent.contains('plugins {')) {
+          newContent = newContent.replaceFirst(
+            'plugins {',
+            'plugins {\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
+          );
+          changed = true;
+        }
+      }
+
       return changed ? newContent : null;
     });
   }
 
   Future<void> _removeSettingsGradle() async {
     await modifyFile(settingsGradle, 'Settings Gradle', (content) async {
-      return content
+      var newContent = content
           .replaceFirst('\n        $_mavenRepo', '')
           .replaceFirst(_mavenRepo, '');
+
+      // Remove plugin
+      newContent = newContent.replaceFirst(
+        '\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
+        '',
+      );
+
+      return newContent;
     });
   }
 
@@ -109,7 +129,7 @@ class HmsConfigurator extends BaseConfigurator {
         }
       }
 
-      // 2. Add Plugin
+      // 2. Add Plugin (only if plugins block exists HERE)
       if (!newContent.contains(_agconnectPluginId)) {
         if (newContent.contains('plugins {')) {
           newContent = newContent.replaceFirst(
@@ -159,6 +179,10 @@ class HmsConfigurator extends BaseConfigurator {
             'dependencies {',
             'dependencies {\n    implementation("$_installReferrer")',
           );
+          changed = true;
+        } else {
+          newContent +=
+              '\n\ndependencies {\n    implementation("$_installReferrer")\n}';
           changed = true;
         }
       }

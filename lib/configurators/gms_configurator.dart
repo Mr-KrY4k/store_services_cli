@@ -15,6 +15,7 @@ class GmsConfigurator extends BaseConfigurator {
   Future<void> apply() async {
     print('🔧 [GMS] Applying configuration...');
 
+    await _modifySettingsGradle(); // NEW: Check settings for plugins
     await _modifyRootBuildGradle();
     await _modifyAppBuildGradle();
     await _modifyManifest();
@@ -27,10 +28,42 @@ class GmsConfigurator extends BaseConfigurator {
 
   Future<void> remove() async {
     print('🧹 [GMS] Removing configuration...');
+    await _removeSettingsGradle(); // NEW
     await _removeRootBuildGradle();
     await _removeAppBuildGradle();
     await _removeManifest();
     await _removePubspec();
+  }
+
+  Future<void> _modifySettingsGradle() async {
+    await modifyFile(settingsGradle, 'Settings Gradle', (content) async {
+      // Check for plugins block to add GMS if using modern Flutter structure
+      if (!content.contains(_gmsPluginId)) {
+        if (content.contains('plugins {')) {
+          final replacement =
+              'plugins {\n    id("$_gmsPluginId") version "$_gmsPluginVersion" apply false\n    id("$_crashlyticsPluginId") version "$_crashlyticsPluginVersion" apply false';
+          return content.replaceFirst('plugins {', replacement);
+        }
+      }
+      return null;
+    });
+  }
+
+  Future<void> _removeSettingsGradle() async {
+    await modifyFile(settingsGradle, 'Settings Gradle', (content) async {
+      if (content.contains(_gmsPluginId)) {
+        return content
+            .replaceFirst(
+              '\n    id("$_gmsPluginId") version "$_gmsPluginVersion" apply false',
+              '',
+            )
+            .replaceFirst(
+              '\n    id("$_crashlyticsPluginId") version "$_crashlyticsPluginVersion" apply false',
+              '',
+            );
+      }
+      return null;
+    });
   }
 
   Future<void> _modifyRootBuildGradle() async {
@@ -86,6 +119,11 @@ class GmsConfigurator extends BaseConfigurator {
             'dependencies {',
             'dependencies {\n    implementation("$_playServicesLocation")\n    implementation("$_installReferrer")',
           );
+          changed = true;
+        } else {
+          // If dependencies block missing, add it at the end
+          newContent +=
+              '\n\ndependencies {\n    implementation("$_playServicesLocation")\n    implementation("$_installReferrer")\n}';
           changed = true;
         }
       }
