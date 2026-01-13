@@ -33,15 +33,78 @@ class FirebaseAnalyticsImpl implements StoreAnalytics {
 }
 
 class FirebasePushImpl implements StorePush {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  @override
+  // TODO: implement messages
+  Future<Map<String, dynamic>> get messages => throw UnimplementedError();
 
   @override
-  Future<String?> getToken() async {
-    return _messaging.getToken();
+  // TODO: implement onMessageReceived
+  Stream<Map<String, dynamic>> get onMessageReceived =>
+      throw UnimplementedError();
+
+  @override
+  // TODO: implement onMessagesReceived
+  Stream<List<Map<String, dynamic>>> get onMessagesReceived =>
+      throw UnimplementedError();
+
+  @override
+  // TODO: implement permissionStatus
+  PushNotificationStatus get permissionStatus => throw UnimplementedError();
+
+  @override
+  // TODO: implement permissionStatusReceived
+  Stream<PushNotificationStatus> get permissionStatusReceived =>
+      throw UnimplementedError();
+
+  @override
+  Future<String?> get token async => _token.future;
+
+  final _messaging = FirebaseMessaging.instance;
+
+  final _token = Completer<String>();
+
+  @override
+  Future<void> init() async {
+    final token = await _getToken();
+    _token.complete(token ?? 'NA');
+  }
+
+  Future<String?> _getToken() async {
+    try {
+      final token = await _messaging.getToken();
+      return token;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
-  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+  Future<bool> checkPermissionStatus() {
+    // TODO: implement checkPermissionStatus
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> requestPermission({
+    void Function()? onPermissionGranted,
+    void Function()? onPermissionDenied,
+  }) async {
+    final permission = await _messaging.requestPermission();
+    switch (permission.authorizationStatus) {
+      case AuthorizationStatus.authorized:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case AuthorizationStatus.provisional:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case AuthorizationStatus.denied:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case AuthorizationStatus.notDetermined:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+    }
+  }
 }
 
 class FirebaseAdsImpl implements StoreAds {
@@ -108,10 +171,27 @@ class FirebaseService {
 
   FirebaseService._internal();
 
+  late final StoreAnalytics analytics;
+  late final StorePush push;
+  late final StoreAds ads;
+  late final StoreRemoteConfig remoteConfig;
+
   Future<void> init() async {
     try {
       await Firebase.initializeApp();
       print('🔥 FirebaseService initialized');
+
+      analytics = FirebaseAnalyticsImpl();
+      push = FirebasePushImpl();
+      ads = FirebaseAdsImpl();
+      remoteConfig = FirebaseRemoteConfigImpl();
+
+      await analytics.init();
+      await ads.init();
+      await push.init();
+      await remoteConfig.fetchAndActivate();
+
+      print('🔥 Firebase Adapters initialized');
     } catch (e) {
       print('🔥 FirebaseService init error: $e');
     }

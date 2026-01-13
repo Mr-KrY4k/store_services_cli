@@ -40,27 +40,23 @@ class StoreService {
     }
 
     if (_isHms) {
-      await HmsService().init();
-      analytics = HmsAnalyticsImpl();
-      push = HmsPushImpl();
-      ads = HmsAdsImpl();
-      remoteConfig = HmsRemoteConfigImpl();
+      final service = HmsService();
+      await service.init();
 
-      await analytics.init();
-      await ads.init();
-      await remoteConfig.fetchAndActivate();
+      analytics = service.analytics;
+      push = service.push;
+      ads = service.ads;
+      remoteConfig = service.remoteConfig;
 
       print('✅ StoreService initialized in HMS Mode');
     } else {
-      await FirebaseService().init();
-      analytics = FirebaseAnalyticsImpl();
-      push = FirebasePushImpl();
-      ads = FirebaseAdsImpl();
-      remoteConfig = FirebaseRemoteConfigImpl();
+      final service = FirebaseService();
+      await service.init();
 
-      await analytics.init();
-      await ads.init();
-      await remoteConfig.fetchAndActivate();
+      analytics = service.analytics;
+      push = service.push;
+      ads = service.ads;
+      remoteConfig = service.remoteConfig;
 
       print('✅ StoreService initialized in GMS Mode');
     }

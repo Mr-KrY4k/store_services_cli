@@ -69,6 +69,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Text("Color: ${color.isEmpty ? "No color" : color}");
               },
             ),
+            FutureBuilder(
+              future: push.token,
+              builder: (context, asyncSnapshot) {
+                return Text("Push Token: ${asyncSnapshot.data}");
+              },
+            ),
           ],
         ),
       ),

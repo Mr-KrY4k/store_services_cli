@@ -19,18 +19,15 @@ class StoreService {
   late final StoreRemoteConfig remoteConfig;
 
   Future<void> init() async {
-    // 1. Init Firebase
-    await FirebaseService().init();
+    // 1. Init Firebase (and adapters internally)
+    final service = FirebaseService();
+    await service.init();
 
-    // 2. Assign adapters
-    analytics = FirebaseAnalyticsImpl();
-    push = FirebasePushImpl();
-    ads = FirebaseAdsImpl();
-    remoteConfig = FirebaseRemoteConfigImpl();
-
-    await analytics.init();
-    await ads.init();
-    await remoteConfig.fetchAndActivate();
+    // 2. Assign adapters from service
+    analytics = service.analytics;
+    push = service.push;
+    ads = service.ads;
+    remoteConfig = service.remoteConfig;
 
     print('✅ StoreService (GMS) fully initialized');
   }

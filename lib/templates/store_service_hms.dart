@@ -19,18 +19,15 @@ class StoreService {
   late final StoreRemoteConfig remoteConfig;
 
   Future<void> init() async {
-    // 1. Init HMS
-    await HmsService().init();
+    // 1. Init HMS (and adapters internally)
+    final service = HmsService();
+    await service.init();
 
     // 2. Assign adapters
-    analytics = HmsAnalyticsImpl();
-    push = HmsPushImpl();
-    ads = HmsAdsImpl();
-    remoteConfig = HmsRemoteConfigImpl();
-
-    await analytics.init();
-    await ads.init();
-    await remoteConfig.fetchAndActivate();
+    analytics = service.analytics;
+    push = service.push;
+    ads = service.ads;
+    remoteConfig = service.remoteConfig;
 
     print('✅ StoreService (HMS) fully initialized');
   }
