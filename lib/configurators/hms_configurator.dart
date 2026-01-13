@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:store_services_cli/configurators/base_configurator.dart';
 
 class HmsConfigurator extends BaseConfigurator {
@@ -9,6 +10,17 @@ class HmsConfigurator extends BaseConfigurator {
       'maven(url = "https://developer.huawei.com/repo/")';
   static const _installReferrer =
       'com.android.installreferrer:installreferrer:2.2';
+
+  // Resolution strategy snippet
+  static const _resolutionStrategySpy = '''
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "com.huawei.agconnect") {
+                useModule("com.huawei.agconnect:agcp:1.9.1.303")
+            }
+        }
+    }
+''';
 
   static const _proguardRulesContent = '''
 # HMS Rules
@@ -33,6 +45,16 @@ class HmsConfigurator extends BaseConfigurator {
 -keep class com.huawei.hms.flutter.** { *; }
 -repackageclasses
 ''';
+
+  // ... (buildTypes constants omitted for brevity as they are unchanged) ...
+  // Actually, keeping them as is, just inserting resolutionStrategy above proguardRulesContent.
+
+  // NOTE: Previous lines were not shown in context, I need to match carefully.
+  // I will just add _resolutionStrategySpy back where it was (around line 13).
+  // And update methods.
+
+  // This tool call is tricky with big file. Let's do multiple replace calls or use multi_replace.
+  // I will use replace_file_content for the constant first.
 
   // Standard Flutter default (simplified)
   static const _cleanBuildTypes = '''
@@ -71,7 +93,18 @@ class HmsConfigurator extends BaseConfigurator {
       var newContent = content;
       bool changed = false;
 
-      // 1. Add Repository
+      // 1. Add Resolution Strategy (Start of pluginManagement or before repositories)
+      if (!newContent.contains('com.huawei.agconnect:agcp')) {
+        if (newContent.contains('repositories {')) {
+          newContent = newContent.replaceFirst(
+            'repositories {',
+            '$_resolutionStrategySpy\n    repositories {',
+          );
+          changed = true;
+        }
+      }
+
+      // 2. Add Repository
       if (!newContent.contains('developer.huawei.com/repo')) {
         if (newContent.contains('repositories {')) {
           newContent = newContent.replaceFirst(
@@ -102,6 +135,11 @@ class HmsConfigurator extends BaseConfigurator {
       var newContent = content
           .replaceFirst('\n        $_mavenRepo', '')
           .replaceFirst(_mavenRepo, '');
+
+      // Remove resolution strategy
+      newContent = newContent
+          .replaceFirst('$_resolutionStrategySpy\n    ', '')
+          .replaceFirst(_resolutionStrategySpy, '');
 
       // Remove plugin
       newContent = newContent.replaceFirst(
@@ -270,8 +308,20 @@ class HmsConfigurator extends BaseConfigurator {
       var newContent = content;
       bool changed = false;
 
+      // 0. Ensure xmlns:tools is present
+      if (!newContent.contains('xmlns:tools')) {
+        newContent = newContent.replaceFirst(
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"',
+        );
+        changed = true;
+      }
+
       // Permissions to REMOVE
       final permissions = [
+        '<uses-permission android:name="android.permission.INTERNET"/>',
+        '<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
+        '<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />',
         '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />',
         '<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:node="remove" />',
         '<uses-permission android:name="com.google.android.gms.permission.AD_ID"/>',
@@ -341,6 +391,9 @@ class HmsConfigurator extends BaseConfigurator {
     await modifyFile(manifest, 'Manifest', (content) async {
       var newContent = content;
       final permissions = [
+        '<uses-permission android:name="android.permission.INTERNET"/>',
+        '<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
+        '<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />',
         '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />',
         '<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:node="remove" />',
       ];
@@ -441,6 +494,19 @@ class HmsConfigurator extends BaseConfigurator {
   }
 
   Future<void> _modifyProguard() async {
+    // Check if file exists, if not create empty?
+    // basic modifyFile expects file to exist.
+    // Use File() check? BaseConfigurator has modifyFile, but not file creation logic usually.
+    // But modifyFile reads file.
+    // We can use dart:io here?
+    // Or just use dcli.
+
+    // We need to import dart:io or use dcli.
+    // BaseConfigurator imports dcli.
+    if (!File(proguardRules).existsSync()) {
+      File(proguardRules).createSync(recursive: true);
+    }
+
     await modifyFile(proguardRules, 'Proguard Rules', (content) async {
       if (!content.contains('com.huawei.hms')) {
         return content + '\n' + _proguardRulesContent;

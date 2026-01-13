@@ -127,6 +127,28 @@ class GmsConfigurator extends BaseConfigurator {
           changed = true;
         }
       }
+
+      // 3. Replace buildTypes
+      const userRequestedBuildTypes = '''
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+        getByName("debug") {
+            isDebuggable = true
+        }
+    }''';
+
+      final replaced = replaceBlock(
+        newContent,
+        'buildTypes',
+        userRequestedBuildTypes,
+      );
+      if (replaced != null && replaced != newContent) {
+        newContent = replaced;
+        changed = true;
+      }
+
       return changed ? newContent : null;
     });
   }
@@ -161,17 +183,46 @@ class GmsConfigurator extends BaseConfigurator {
         );
         changed = true;
       }
-      return changed ? newContent : null;
+
+      // Restore clean buildTypes
+      const cleanBuildTypes = '''
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }''';
+
+      final replaced = replaceBlock(newContent, 'buildTypes', cleanBuildTypes);
+      if (replaced != null) {
+        newContent = replaced;
+      }
+
+      return changed || replaced != null ? newContent : null;
     });
   }
 
   Future<void> _modifyManifest() async {
     await modifyFile(manifest, 'Manifest', (content) async {
+      // Variables for modification tracking
       var newContent = content;
       bool changed = false;
 
+      // 0. Ensure xmlns:tools is present
+      if (!newContent.contains('xmlns:tools')) {
+        newContent = newContent.replaceFirst(
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"',
+        );
+        changed = true;
+      }
+
       // Permissions
       final permissions = [
+        '<uses-permission android:name="android.permission.INTERNET"/>',
+        '<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />',
+        '<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />',
         '<uses-permission android:name="com.google.android.gms.permission.AD_ID"/>',
         '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />',
       ];
