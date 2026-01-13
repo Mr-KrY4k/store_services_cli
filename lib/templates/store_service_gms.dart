@@ -28,6 +28,9 @@ class StoreService {
     ads = FirebaseAdsImpl();
     remoteConfig = FirebaseRemoteConfigImpl();
 
+    await analytics.init();
+    await ads.init();
+
     print('✅ StoreService (GMS) fully initialized');
   }
 }

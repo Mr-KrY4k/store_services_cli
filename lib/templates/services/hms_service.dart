@@ -1,11 +1,24 @@
+import 'dart:async';
+
 import 'package:huawei_ads/huawei_ads.dart';
 
 import '../store_interfaces.dart';
 
 class HmsAnalyticsImpl implements StoreAnalytics {
+  final _appInstanceId = Completer<String>();
+
   @override
-  Future<void> logEvent(String name, [Map<String, dynamic>? parameters]) async {
-    print('📊 [HMS Stub] logEvent: \$name');
+  Future<String> get appInstanceId async => _appInstanceId.future;
+
+  @override
+  Future<void> init() async {
+    final id = await _getAppInstanceId();
+    _appInstanceId.complete(id ?? 'NA');
+  }
+
+  Future<String?> _getAppInstanceId() async {
+    await Future.delayed(const Duration(seconds: 1));
+    return 'NA';
   }
 }
 
@@ -21,20 +34,27 @@ class HmsPushImpl implements StorePush {
 }
 
 class HmsAdsImpl implements StoreAds {
-  String? _advertisingId;
+  final _advertisingId = Completer<String>();
 
   @override
   final String advertisingType = 'OAID';
 
   @override
-  Future<String> get advertisingId async {
-    _advertisingId ??= await _getAdvertisingId();
-    return _advertisingId ?? 'NA';
-  }
+  Future<String> get advertisingId async => _advertisingId.future;
 
   Future<String?> _getAdvertisingId() async {
-    final client = await AdvertisingIdClient.getAdvertisingIdInfo();
-    return client.getId;
+    try {
+      final client = await AdvertisingIdClient.getAdvertisingIdInfo();
+      return client.getId;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> init() async {
+    final id = await _getAdvertisingId();
+    _advertisingId.complete(id ?? 'NA');
   }
 }
 

@@ -28,6 +28,9 @@ class StoreService {
     ads = HmsAdsImpl();
     remoteConfig = HmsRemoteConfigImpl();
 
+    await analytics.init();
+    await ads.init();
+
     print('✅ StoreService (HMS) fully initialized');
   }
 }

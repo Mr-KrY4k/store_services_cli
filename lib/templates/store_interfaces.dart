@@ -1,6 +1,7 @@
 abstract class StoreAnalytics {
-  Future<void> logEvent(String name, [Map<String, dynamic>? parameters]);
-  // Add other common methods if needed
+  Future<String> get appInstanceId;
+
+  Future<void> init();
 }
 
 abstract class StorePush {
@@ -11,6 +12,8 @@ abstract class StorePush {
 abstract class StoreAds {
   String get advertisingType;
   Future<String> get advertisingId;
+
+  Future<void> init();
 }
 
 abstract class StoreRemoteConfig {

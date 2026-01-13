@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,12 +9,26 @@ import 'package:advertising_id/advertising_id.dart';
 import '../store_interfaces.dart';
 
 class FirebaseAnalyticsImpl implements StoreAnalytics {
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  final _analytics = FirebaseAnalytics.instance;
+
+  final _appInstanceId = Completer<String>();
 
   @override
-  Future<void> logEvent(String name, [Map<String, dynamic>? parameters]) async {
-    final Map<String, Object>? params = parameters?.cast<String, Object>();
-    await _analytics.logEvent(name: name, parameters: params);
+  Future<String> get appInstanceId async => _appInstanceId.future;
+
+  @override
+  Future<void> init() async {
+    final id = await _getAppInstanceId();
+    _appInstanceId.complete(id ?? 'NA');
+  }
+
+  Future<String?> _getAppInstanceId() async {
+    try {
+      final id = await _analytics.appInstanceId;
+      return id;
+    } catch (e) {
+      return null;
+    }
   }
 }
 
@@ -29,15 +45,27 @@ class FirebasePushImpl implements StorePush {
 }
 
 class FirebaseAdsImpl implements StoreAds {
-  String? _advertisingId;
+  final _advertisingId = Completer<String>();
 
   @override
   final String advertisingType = 'GAID';
 
   @override
-  Future<String> get advertisingId async {
-    _advertisingId ??= await AdvertisingId.id(true);
-    return _advertisingId ?? 'NA';
+  Future<String> get advertisingId async => _advertisingId.future;
+
+  @override
+  Future<void> init() async {
+    final id = await _getAdvertisingId();
+    _advertisingId.complete(id ?? 'NA');
+  }
+
+  Future<String?> _getAdvertisingId() async {
+    try {
+      final id = await AdvertisingId.id(true);
+      return id;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

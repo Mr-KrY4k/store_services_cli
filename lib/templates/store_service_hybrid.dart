@@ -41,6 +41,10 @@ class StoreService {
       push = HmsPushImpl();
       ads = HmsAdsImpl();
       remoteConfig = HmsRemoteConfigImpl();
+
+      await analytics.init();
+      await ads.init();
+
       print('✅ StoreService initialized in HMS Mode');
     } else {
       await FirebaseService().init();
@@ -48,6 +52,10 @@ class StoreService {
       push = FirebasePushImpl();
       ads = FirebaseAdsImpl();
       remoteConfig = FirebaseRemoteConfigImpl();
+
+      await analytics.init();
+      await ads.init();
+
       print('✅ StoreService initialized in GMS Mode');
     }
   }
