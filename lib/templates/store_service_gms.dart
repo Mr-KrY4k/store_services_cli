@@ -30,6 +30,7 @@ class StoreService {
 
     await analytics.init();
     await ads.init();
+    await remoteConfig.fetchAndActivate();
 
     print('✅ StoreService (GMS) fully initialized');
   }

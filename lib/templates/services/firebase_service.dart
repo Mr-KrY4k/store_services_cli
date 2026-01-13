@@ -72,8 +72,14 @@ class FirebaseAdsImpl implements StoreAds {
 class FirebaseRemoteConfigImpl implements StoreRemoteConfig {
   final FirebaseRemoteConfig _config = FirebaseRemoteConfig.instance;
 
+  final _settings = RemoteConfigSettings(
+    fetchTimeout: Duration.zero,
+    minimumFetchInterval: Duration.zero,
+  );
+
   @override
   Future<void> fetchAndActivate() async {
+    await _config.setConfigSettings(_settings);
     await _config.fetchAndActivate();
   }
 
@@ -88,6 +94,9 @@ class FirebaseRemoteConfigImpl implements StoreRemoteConfig {
 
   @override
   double getDouble(String key) => _config.getDouble(key);
+
+  @override
+  Map<String, dynamic> getAll() => _config.getAll();
 }
 
 class FirebaseService {

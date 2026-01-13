@@ -22,4 +22,5 @@ abstract class StoreRemoteConfig {
   bool getBool(String key);
   int getInt(String key);
   double getDouble(String key);
+  Map<String, dynamic> getAll();
 }

@@ -61,7 +61,7 @@ class HmsAdsImpl implements StoreAds {
 class HmsRemoteConfigImpl implements StoreRemoteConfig {
   @override
   Future<void> fetchAndActivate() async {
-    print('⚙️ [HMS Stub] fetchAndActivate');
+    await Future.delayed(const Duration(seconds: 1));
   }
 
   @override
@@ -75,6 +75,9 @@ class HmsRemoteConfigImpl implements StoreRemoteConfig {
 
   @override
   double getDouble(String key) => 0.0;
+
+  @override
+  Map<String, dynamic> getAll() => {};
 }
 
 class HmsService {

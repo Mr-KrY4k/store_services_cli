@@ -44,6 +44,7 @@ class StoreService {
 
       await analytics.init();
       await ads.init();
+      await remoteConfig.fetchAndActivate();
 
       print('✅ StoreService initialized in HMS Mode');
     } else {
@@ -55,6 +56,7 @@ class StoreService {
 
       await analytics.init();
       await ads.init();
+      await remoteConfig.fetchAndActivate();
 
       print('✅ StoreService initialized in GMS Mode');
     }
