@@ -90,67 +90,87 @@ class HmsConfigurator extends BaseConfigurator {
 
   Future<void> _modifySettingsGradle() async {
     // Extract versions to preserve them
-    String agpVersion = '8.11.1';
-    String kotlinVersion = '2.2.20';
-    String flutterLoaderVersion = '1.0.0';
-
     if (File(settingsGradle).existsSync()) {
-      final content = File(settingsGradle).readAsStringSync();
-
-      final agpMatch = RegExp(
-        r'id\("com.android.application"\) version "([^"]+)"',
-      ).firstMatch(content);
-      if (agpMatch != null) agpVersion = agpMatch.group(1)!;
-
-      final kotlinMatch = RegExp(
-        r'id\("org.jetbrains.kotlin.android"\) version "([^"]+)"',
-      ).firstMatch(content);
-      if (kotlinMatch != null) kotlinVersion = kotlinMatch.group(1)!;
-
-      final loaderMatch = RegExp(
-        r'id\("dev.flutter.flutter-plugin-loader"\) version "([^"]+)"',
-      ).firstMatch(content);
-      if (loaderMatch != null) flutterLoaderVersion = loaderMatch.group(1)!;
+      // Just check existence, parsing not needed for injection
     }
 
     await modifyFile(settingsGradle, 'Settings Gradle', (content) async {
-      return '''
-pluginManagement {
-    val flutterSdkPath = run {
-        val properties = java.util.Properties()
-        file("local.properties").inputStream().use { properties.load(it) }
-        val flutterSdkPath = properties.getProperty("flutter.sdk")
-        require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
-        flutterSdkPath
-    }
+      // Parse existing content to check for GMS/Google Services
+      // We assume if 'com.google.gms.google-services' was enabled by GMS configurator,
+      // it added a plugin or modification.
+      // But actually, GmsConfigurator uses `modifyFile` to *inject* strings.
+      // HmsConfigurator uses `modifyFile` to *replace* content with a template.
+      // We need to inject HMS logic instead of replacing, OR build a comprehensive template.
 
-    includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
+      // Better approach: Safe Injection similar to GmsConfigurator.
 
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-        maven { url = uri("https://developer.huawei.com/repo/") }
-    }
+      var newContent = content;
+      bool changed = false;
 
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id == "com.huawei.agconnect") {
-                useModule("com.huawei.agconnect:agcp:$_agconnectVersion")
-            }
+      // 1. Add Maven Repo to pluginManagement > repositories
+      if (!newContent.contains('https://developer.huawei.com/repo/')) {
+        // Try precise injection
+        if (newContent.contains('gradlePluginPortal()')) {
+          newContent = newContent.replaceFirst(
+            'gradlePluginPortal()',
+            'gradlePluginPortal()\n        maven { url = uri("https://developer.huawei.com/repo/") }',
+          );
+          changed = true;
+        } else if (newContent.contains('repositories {')) {
+          newContent = newContent.replaceFirst(
+            'repositories {',
+            'repositories {\n        maven { url = uri("https://developer.huawei.com/repo/") }',
+          );
+          changed = true;
         }
-    }
-}
+      }
 
-plugins {
-    id("dev.flutter.flutter-plugin-loader") version "$flutterLoaderVersion"
-    id("com.android.application") version "$agpVersion" apply false
-    id("org.jetbrains.kotlin.android") version "$kotlinVersion" apply false
-    id("com.huawei.agconnect") version "$_agconnectVersion" apply false
-}
+      // 2. Add Resolution Strategy
+      if (!newContent.contains('com.huawei.agconnect:agcp')) {
+        if (newContent.contains('pluginManagement {')) {
+          // Insert at end of pluginManagement
+          // Finding closing brace is hard without parser.
+          // But Gms uses simplified injection.
+          // Let's try to find a good anchor.
+          if (newContent.contains('repositories {')) {
+            // Insert before repositories? No, usually after.
+            // Let's replace 'pluginManagement {' with 'pluginManagement {\n$_resolutionStrategySpy' is dangerous if it breaks structure.
 
-include(":app")
-''';
+            // Let's try replacing the closing brace of pluginManagement?
+            // Risky.
+
+            // Let's go with the strategy of: Find where to insert.
+            // If we reuse the template approach, we MUST include what we found.
+
+            // Let's revert to the Template approach but make it smarter.
+            // No, user wants stability. Injection is safer for hybrid.
+
+            final repoBlock = RegExp(r'repositories \{[^}]+\}');
+            final match = repoBlock.firstMatch(newContent);
+            if (match != null) {
+              newContent = newContent.replaceRange(
+                match.end,
+                match.end,
+                '\n$_resolutionStrategySpy',
+              );
+              changed = true;
+            }
+          }
+        }
+      }
+
+      // 3. Apply Plugin
+      if (!newContent.contains('id("$_agconnectPluginId")')) {
+        if (newContent.contains('plugins {')) {
+          newContent = newContent.replaceFirst(
+            'plugins {',
+            'plugins {\n    id("$_agconnectPluginId") version "$_agconnectVersion" apply false',
+          );
+          changed = true;
+        }
+      }
+
+      return changed ? newContent : null;
     });
   }
 
@@ -176,23 +196,6 @@ include(":app")
   }
 
   Future<void> _modifyRootBuildGradle() async {
-    // 1. Extract versions from settings.gradle.kts
-    String agpVersion = '8.11.1'; // fallback
-    String kotlinVersion = '2.2.20'; // fallback
-
-    if (File(settingsGradle).existsSync()) {
-      final settingsContent = File(settingsGradle).readAsStringSync();
-      final agpMatch = RegExp(
-        r'id\("com.android.application"\) version "([^"]+)"',
-      ).firstMatch(settingsContent);
-      if (agpMatch != null) agpVersion = agpMatch.group(1)!;
-
-      final kotlinMatch = RegExp(
-        r'id\("org.jetbrains.kotlin.android"\) version "([^"]+)"',
-      ).firstMatch(settingsContent);
-      if (kotlinMatch != null) kotlinVersion = kotlinMatch.group(1)!;
-    }
-
     await modifyFile(rootBuildGradle, 'Root Gradle', (content) async {
       // We will mostly OVERWRITE or ensure the structure matches the user request.
       // User want: imports, allprojects, buildscript, dir, subprojects, clean.
@@ -201,43 +204,34 @@ include(":app")
       // But user said "sdelai tak chtoby poluchilos tak".
       // To be safe and avoid duplicates, I will reconstruct the file.
 
-      const template = '''
-import org.gradle.api.file.Directory
+      var newContent = content;
+      bool changed = false;
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven(url = "https://developer.huawei.com/repo/")
-    }
-}
+      // 1. Add Maven Repo
+      if (!newContent.contains('https://developer.huawei.com/repo/')) {
+        if (newContent.contains('repositories {')) {
+          // Basic injection: Add to all occurrences (buildscript and allprojects)
+          newContent = newContent.replaceAll(
+            'repositories {',
+            'repositories {\n        maven(url = "https://developer.huawei.com/repo/")',
+          );
+          changed = true;
+        }
+      }
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-        maven(url = "https://developer.huawei.com/repo/")
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:AGP_VERSION")
-        classpath("com.huawei.agconnect:agcp:HMS_VERSION")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:KOTLIN_VERSION")
-    }
-}
+      // 2. Add Classpath
+      if (!newContent.contains('com.huawei.agconnect:agcp')) {
+        if (newContent.contains('dependencies {')) {
+          newContent = newContent.replaceFirst(
+            'dependencies {',
+            'dependencies {\n        classpath("com.huawei.agconnect:agcp:$_agconnectVersion")',
+          );
+          changed = true;
+        }
+      }
 
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
-}
+      // 3. Add AIDL Fix
+      const aidlFix = '''
 
 // Fix for Huawei Ads AIDL compilation per hms-flutter-plugin/#396
 subprojects {
@@ -254,11 +248,12 @@ subprojects {
     }
 }
 ''';
+      if (!newContent.contains('Fix for Huawei Ads AIDL compilation')) {
+        newContent += aidlFix;
+        changed = true;
+      }
 
-      return template
-          .replaceFirst('AGP_VERSION', agpVersion)
-          .replaceFirst('HMS_VERSION', _agconnectVersion)
-          .replaceFirst('KOTLIN_VERSION', kotlinVersion);
+      return changed ? newContent : null;
     });
   }
 
