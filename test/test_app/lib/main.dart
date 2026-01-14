@@ -75,6 +75,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Text("Push Token: ${asyncSnapshot.data}");
               },
             ),
+            StreamBuilder(
+              stream: push.permissionStatusReceived,
+              builder: (context, asyncSnapshot) {
+                return Text(
+                  "Push Permission: ${asyncSnapshot.data ?? push.permissionStatus}",
+                );
+              },
+            ),
+            ElevatedButton(
+              onPressed: () => push.requestPermission(),
+              child: const Text("Request Permission"),
+            ),
           ],
         ),
       ),

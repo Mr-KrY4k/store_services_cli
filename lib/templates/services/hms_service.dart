@@ -24,7 +24,7 @@ class HmsAnalyticsImpl implements StoreAnalytics {
 
 class HmsPushImpl implements StorePush {
   @override
-  Future<bool> checkPermissionStatus() {
+  Future<PushNotificationStatus> checkPermissionStatus() {
     // TODO: implement checkPermissionStatus
     throw UnimplementedError();
   }
@@ -59,10 +59,7 @@ class HmsPushImpl implements StorePush {
       throw UnimplementedError();
 
   @override
-  Future<void> requestPermission({
-    void Function()? onPermissionGranted,
-    void Function()? onPermissionDenied,
-  }) {
+  Future<PushNotificationStatus> requestPermission() {
     // TODO: implement requestPermission
     throw UnimplementedError();
   }

@@ -48,13 +48,11 @@ class FirebasePushImpl implements StorePush {
       throw UnimplementedError();
 
   @override
-  // TODO: implement permissionStatus
-  PushNotificationStatus get permissionStatus => throw UnimplementedError();
+  PushNotificationStatus get permissionStatus => _permissionStatus;
 
   @override
-  // TODO: implement permissionStatusReceived
   Stream<PushNotificationStatus> get permissionStatusReceived =>
-      throw UnimplementedError();
+      _permissionStatusReceived.stream;
 
   @override
   Future<String?> get token async => _token.future;
@@ -63,8 +61,15 @@ class FirebasePushImpl implements StorePush {
 
   final _token = Completer<String>();
 
+  PushNotificationStatus _permissionStatus =
+      PushNotificationStatus.notDetermined;
+
+  final _permissionStatusReceived =
+      StreamController<PushNotificationStatus>.broadcast();
+
   @override
   Future<void> init() async {
+    _permissionStatusReceived.add(PushNotificationStatus.notDetermined);
     final token = await _getToken();
     _token.complete(token ?? 'NA');
   }
@@ -79,31 +84,31 @@ class FirebasePushImpl implements StorePush {
   }
 
   @override
-  Future<bool> checkPermissionStatus() {
-    // TODO: implement checkPermissionStatus
-    throw UnimplementedError();
+  Future<PushNotificationStatus> checkPermissionStatus() async {
+    final settings = await _messaging.getNotificationSettings();
+    final status = settings.authorizationStatus;
+    switch (status) {
+      case AuthorizationStatus.authorized:
+        _permissionStatus = PushNotificationStatus.authorized;
+        break;
+      case AuthorizationStatus.provisional:
+        _permissionStatus = PushNotificationStatus.provisional;
+        break;
+      case AuthorizationStatus.denied:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+      case AuthorizationStatus.notDetermined:
+        _permissionStatus = PushNotificationStatus.notDetermined;
+        break;
+    }
+    _permissionStatusReceived.add(_permissionStatus);
+    return _permissionStatus;
   }
 
   @override
-  Future<void> requestPermission({
-    void Function()? onPermissionGranted,
-    void Function()? onPermissionDenied,
-  }) async {
-    final permission = await _messaging.requestPermission();
-    switch (permission.authorizationStatus) {
-      case AuthorizationStatus.authorized:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case AuthorizationStatus.provisional:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case AuthorizationStatus.denied:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case AuthorizationStatus.notDetermined:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-    }
+  Future<PushNotificationStatus> requestPermission() async {
+    await _messaging.requestPermission();
+    return await checkPermissionStatus();
   }
 }
 

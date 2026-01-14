@@ -10,12 +10,9 @@ abstract class StoreAnalytics {
 
 abstract class StorePush {
   Future<void> init();
-  Future<void> requestPermission({
-    void Function()? onPermissionGranted,
-    void Function()? onPermissionDenied,
-  });
+  Future<PushNotificationStatus> requestPermission();
   Future<String?> get token;
-  Future<bool> checkPermissionStatus();
+  Future<PushNotificationStatus> checkPermissionStatus();
   Future<Map<String, dynamic>> get messages;
   Stream<Map<String, dynamic>> get onMessageReceived;
   Stream<List<Map<String, dynamic>>> get onMessagesReceived;
@@ -39,4 +36,4 @@ abstract class StoreRemoteConfig {
   Map<String, dynamic> getAll();
 }
 
-enum PushNotificationStatus { granted, denied, limited }
+enum PushNotificationStatus { authorized, denied, notDetermined, provisional }
