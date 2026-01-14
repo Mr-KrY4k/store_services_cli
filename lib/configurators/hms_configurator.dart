@@ -612,6 +612,7 @@ subprojects {
       url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
       ref: hms_push_flutter_3.29
       path: flutter-hms-availability
+  permission_handler: ^12.0.1
 ''';
 
       if (newContent.contains('dependencies:')) {
@@ -629,7 +630,26 @@ subprojects {
 
   Future<void> _removePubspec() async {
     await modifyFile(pubspec, 'Pubspec', (content) async {
-      const deps = '''
+      const depsNew = '''
+  huawei_push:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-push
+  huawei_ads:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-ads
+  huawei_hmsavailability:
+    git:
+      url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
+      ref: hms_push_flutter_3.29
+      path: flutter-hms-availability
+  permission_handler: ^12.0.1
+''';
+
+      const depsOld = '''
   huawei_push:
     git:
       url: https://github.com/Mr-KrY4k/hms-flutter-plugin.git
@@ -646,8 +666,18 @@ subprojects {
       ref: hms_push_flutter_3.29
       path: flutter-hms-availability
 ''';
-      // Try remove with newline prefix
-      return content.replaceFirst('\n$deps', '').replaceFirst(deps, '');
+
+      var newContent = content;
+      // Try remove new deps
+      newContent = newContent
+          .replaceFirst('\n$depsNew', '')
+          .replaceFirst(depsNew, '');
+      // Try remove old deps (if new removal didn't happen or partial match issues)
+      newContent = newContent
+          .replaceFirst('\n$depsOld', '')
+          .replaceFirst(depsOld, '');
+
+      return newContent;
     });
   }
 
