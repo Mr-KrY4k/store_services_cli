@@ -5,6 +5,8 @@
 import 'dart:async';
 
 import 'package:huawei_ads/huawei_ads.dart';
+import 'package:huawei_push/huawei_push.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../store_interfaces.dart';
 
@@ -27,50 +29,126 @@ class HmsAnalyticsImpl implements StoreAnalytics {
 }
 
 class HmsPushImpl implements StorePush {
-  @override
-  Future<PushNotificationStatus> checkPermissionStatus() {
-    // TODO: implement checkPermissionStatus
-    throw UnimplementedError();
-  }
+  final _token = Completer<String>();
 
   @override
-  Future<void> init() {
-    // TODO: implement init
-    throw UnimplementedError();
-  }
+  Future<String?> get token => _token.future;
+
+  PushNotificationStatus _permissionStatus =
+      PushNotificationStatus.notDetermined;
 
   @override
-  // TODO: implement messages
-  Future<Map<String, dynamic>> get messages => throw UnimplementedError();
+  PushNotificationStatus get permissionStatus => _permissionStatus;
+
+  final _permissionStatusReceived =
+      StreamController<PushNotificationStatus>.broadcast();
 
   @override
-  // TODO: implement onMessageReceived
-  Stream<Map<String, dynamic>> get onMessageReceived =>
-      throw UnimplementedError();
-
-  @override
-  // TODO: implement onMessagesReceived
-  Stream<List<Map<String, dynamic>>> get onMessagesReceived =>
-      throw UnimplementedError();
-
-  @override
-  // TODO: implement permissionStatus
-  PushNotificationStatus get permissionStatus => throw UnimplementedError();
-
-  @override
-  // TODO: implement permissionStatusReceived
   Stream<PushNotificationStatus> get permissionStatusReceived =>
-      throw UnimplementedError();
+      _permissionStatusReceived.stream;
 
   @override
-  Future<PushNotificationStatus> requestPermission() {
-    // TODO: implement requestPermission
-    throw UnimplementedError();
+  Future<PushNotificationStatus> get checkPermissionStatus async {
+    final status = await Permission.notification.status;
+    switch (status) {
+      case PermissionStatus.granted:
+        _permissionStatus = PushNotificationStatus.authorized;
+        break;
+      case PermissionStatus.denied:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+      case PermissionStatus.permanentlyDenied:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+      case PermissionStatus.restricted:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+      case PermissionStatus.limited:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+      case PermissionStatus.provisional:
+        _permissionStatus = PushNotificationStatus.denied;
+        break;
+    }
+    _permissionStatusReceived.add(_permissionStatus);
+    return _permissionStatus;
+  }
+
+  PushNotification? _initialMessage;
+
+  @override
+  PushNotification? get initialMessage => _initialMessage;
+
+  final _onMessageReceived = StreamController<PushNotification>.broadcast();
+
+  @override
+  Stream<PushNotification> get onMessageReceived => _onMessageReceived.stream;
+
+  @override
+  Future<void> init() async {
+    await _getToken();
+    await _initInitialMessage();
+    _handleOnMessageReceived();
+    _handleOnMessageOpenedApp();
+  }
+
+  Future<void> _getToken() async {
+    Push.getToken('');
+    Push.getTokenStream.listen(
+      (token) {
+        _token.complete(token);
+      },
+      onError: (error) {
+        _token.completeError('NA');
+      },
+    );
   }
 
   @override
-  // TODO: implement token
-  Future<String?> get token => throw UnimplementedError();
+  Future<PushNotificationStatus> requestPermission() async {
+    await Permission.notification.request();
+    return checkPermissionStatus;
+  }
+
+  Future<void> _initInitialMessage() async {
+    final message = await Push.getInitialNotification();
+    if (message != null) {
+      _initialMessage = _parsePushNotification(message);
+    }
+  }
+
+  PushNotification _parsePushNotification(Map<String, dynamic> message) {
+    final extras = message['extras'] as Map<Object?, Object?>;
+    return PushNotification(
+      title: extras['title'] as String?,
+      body: extras['body'] as String?,
+      imageUrl: extras['image'] as String?,
+      data: {'link': extras['link'] as String?},
+      messageId: extras['_push_msgid'] as String?,
+    );
+  }
+
+  void _handleOnMessageReceived() {
+    Push.onMessageReceivedStream.listen(
+      (message) {
+        _onMessageReceived.add(_parsePushNotification(message.toMap()));
+      },
+      onError: (error) {
+        _onMessageReceived.addError(error);
+      },
+    );
+  }
+
+  void _handleOnMessageOpenedApp() {
+    Push.onNotificationOpenedApp.listen(
+      (message) {
+        _onMessageReceived.add(_parsePushNotification(message.toMap()));
+      },
+      onError: (error) {
+        _onMessageReceived.addError(error);
+      },
+    );
+  }
 }
 
 class HmsAdsImpl implements StoreAds {
@@ -135,7 +213,7 @@ class HmsService {
   late final StoreRemoteConfig remoteConfig;
 
   Future<void> init() async {
-    print('🔴 HmsService (Stub) initialized');
+    print('🔴 HmsService initialized');
 
     analytics = HmsAnalyticsImpl();
     push = HmsPushImpl();
@@ -144,23 +222,7 @@ class HmsService {
 
     await analytics.init();
     await ads.init();
-
-    // push.init() is currently abstract/unimplemented in stub,
-    // but if we implemented it, we'd call it here.
-    // For now we assume safety or that stub implements it securely.
-    // However, the user added `init()` to HmsPushImpl but it throws UnimplementedError.
-    // We should NOT call it if it throws.
-    // Actually, earlier the user showed HmsPushImpl with UnimplementedError for init.
-    // Calling it will crash.
-    // But StoreService structure requires valid instances.
-    // I should probably FIX HmsPushImpl to have a safe init first?
-    // Or just try specific calls.
-
-    // Wait, the user added `init` to interfaces.
-    try {
-      await push.init();
-    } catch (_) {} // safe stub
-
+    await push.init();
     await remoteConfig.fetchAndActivate();
 
     print('🔴 Hms Adapters initialized');

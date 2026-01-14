@@ -8,10 +8,9 @@ abstract class StorePush {
   Future<void> init();
   Future<PushNotificationStatus> requestPermission();
   Future<String?> get token;
-  Future<PushNotificationStatus> checkPermissionStatus();
-  Future<Map<String, dynamic>> get messages;
-  Stream<Map<String, dynamic>> get onMessageReceived;
-  Stream<List<Map<String, dynamic>>> get onMessagesReceived;
+  Future<PushNotificationStatus> get checkPermissionStatus;
+  PushNotification? get initialMessage;
+  Stream<PushNotification> get onMessageReceived;
   Stream<PushNotificationStatus> get permissionStatusReceived;
   PushNotificationStatus get permissionStatus;
 }
@@ -33,3 +32,39 @@ abstract class StoreRemoteConfig {
 }
 
 enum PushNotificationStatus { authorized, denied, notDetermined, provisional }
+
+class PushNotification {
+  const PushNotification({
+    this.title,
+    this.body,
+    this.imageUrl,
+    this.messageId,
+    this.data,
+  });
+
+  final String? title;
+  final String? body;
+  final String? imageUrl;
+  final String? messageId;
+  final Map<String, dynamic>? data;
+
+  factory PushNotification.fromJson(Map<String, dynamic> json) {
+    return PushNotification(
+      title: json['title'],
+      body: json['body'],
+      imageUrl: json['imageUrl'],
+      messageId: json['messageId'],
+      data: json['data'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'body': body,
+      'imageUrl': imageUrl,
+      'messageId': messageId,
+      'data': data,
+    };
+  }
+}

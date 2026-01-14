@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -33,19 +34,15 @@ class FirebaseAnalyticsImpl implements StoreAnalytics {
 }
 
 class FirebasePushImpl implements StorePush {
-  @override
-  // TODO: implement messages
-  Future<Map<String, dynamic>> get messages => throw UnimplementedError();
+  PushNotification? _initialMessage;
 
   @override
-  // TODO: implement onMessageReceived
-  Stream<Map<String, dynamic>> get onMessageReceived =>
-      throw UnimplementedError();
+  PushNotification? get initialMessage => _initialMessage;
+
+  final _onMessageReceived = StreamController<PushNotification>.broadcast();
 
   @override
-  // TODO: implement onMessagesReceived
-  Stream<List<Map<String, dynamic>>> get onMessagesReceived =>
-      throw UnimplementedError();
+  Stream<PushNotification> get onMessageReceived => _onMessageReceived.stream;
 
   @override
   PushNotificationStatus get permissionStatus => _permissionStatus;
@@ -72,6 +69,9 @@ class FirebasePushImpl implements StorePush {
     _permissionStatusReceived.add(PushNotificationStatus.notDetermined);
     final token = await _getToken();
     _token.complete(token ?? 'NA');
+    await _initInitialMessage();
+    _handleOnMessageReceived();
+    _handleOnMessageOpenedApp();
   }
 
   Future<String?> _getToken() async {
@@ -84,7 +84,7 @@ class FirebasePushImpl implements StorePush {
   }
 
   @override
-  Future<PushNotificationStatus> checkPermissionStatus() async {
+  Future<PushNotificationStatus> get checkPermissionStatus async {
     final settings = await _messaging.getNotificationSettings();
     final status = settings.authorizationStatus;
     switch (status) {
@@ -108,7 +108,47 @@ class FirebasePushImpl implements StorePush {
   @override
   Future<PushNotificationStatus> requestPermission() async {
     await _messaging.requestPermission();
-    return await checkPermissionStatus();
+    return await checkPermissionStatus;
+  }
+
+  Future<void> _initInitialMessage() async {
+    try {
+      final message = await _messaging.getInitialMessage();
+      if (message == null) return;
+      _initialMessage = _parseMessage(message);
+    } catch (e) {
+      _initialMessage = null;
+    }
+  }
+
+  Future<void> _handleOnMessageReceived() async {
+    FirebaseMessaging.onMessage.listen((message) {
+      final notification = _parseMessage(message);
+      _onMessageReceived.add(notification);
+    });
+  }
+
+  Future<void> _handleOnMessageOpenedApp() async {
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final notification = _parseMessage(message);
+      _onMessageReceived.add(notification);
+    });
+  }
+
+  PushNotification _parseMessage(RemoteMessage message) {
+    String? imageUrl;
+    if (Platform.isAndroid) {
+      imageUrl = message.notification?.android?.imageUrl;
+    } else if (Platform.isIOS) {
+      imageUrl = message.notification?.apple?.imageUrl;
+    }
+    return PushNotification(
+      title: message.notification?.title,
+      body: message.notification?.body,
+      imageUrl: imageUrl,
+      messageId: message.messageId,
+      data: message.data,
+    );
   }
 }
 
