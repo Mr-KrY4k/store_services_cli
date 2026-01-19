@@ -12,15 +12,14 @@ import '../store_interfaces.dart';
 class FirebaseAnalyticsImpl implements StoreAnalytics {
   final _analytics = FirebaseAnalytics.instance;
 
-  final _appInstanceId = Completer<String>();
+  String? _appInstanceId;
 
   @override
-  Future<String> get appInstanceId async => _appInstanceId.future;
+  String? get appInstanceId => _appInstanceId;
 
   @override
   Future<void> init() async {
-    final id = await _getAppInstanceId();
-    _appInstanceId.complete(id ?? 'NA');
+    _appInstanceId = await _getAppInstanceId();
   }
 
   Future<String?> _getAppInstanceId() async {
@@ -52,11 +51,11 @@ class FirebasePushImpl implements StorePush {
       _permissionStatusReceived.stream;
 
   @override
-  Future<String?> get token async => _token.future;
+  String? get token => _token;
 
   final _messaging = FirebaseMessaging.instance;
 
-  final _token = Completer<String>();
+  String? _token;
 
   PushNotificationStatus _permissionStatus =
       PushNotificationStatus.notDetermined;
@@ -67,8 +66,7 @@ class FirebasePushImpl implements StorePush {
   @override
   Future<void> init() async {
     _permissionStatusReceived.add(PushNotificationStatus.notDetermined);
-    final token = await _getToken();
-    _token.complete(token ?? 'NA');
+    _token = await _getToken();
     await _initInitialMessage();
     _handleOnMessageReceived();
     _handleOnMessageOpenedApp();
@@ -153,18 +151,17 @@ class FirebasePushImpl implements StorePush {
 }
 
 class FirebaseAdsImpl implements StoreAds {
-  final _advertisingId = Completer<String>();
+  String? _advertisingId;
 
   @override
   final String advertisingType = 'GAID';
 
   @override
-  Future<String> get advertisingId async => _advertisingId.future;
+  String? get advertisingId => _advertisingId;
 
   @override
   Future<void> init() async {
-    final id = await _getAdvertisingId();
-    _advertisingId.complete(id ?? 'NA');
+    _advertisingId = await _getAdvertisingId();
   }
 
   Future<String?> _getAdvertisingId() async {

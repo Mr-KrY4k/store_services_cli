@@ -7,28 +7,27 @@ import 'package:permission_handler/permission_handler.dart';
 import '../store_interfaces.dart';
 
 class HmsAnalyticsImpl implements StoreAnalytics {
-  final _appInstanceId = Completer<String>();
+  String? _appInstanceId;
 
   @override
-  Future<String> get appInstanceId async => _appInstanceId.future;
+  String? get appInstanceId => _appInstanceId;
 
   @override
   Future<void> init() async {
-    final id = await _getAppInstanceId();
-    _appInstanceId.complete(id ?? 'NA');
+    _appInstanceId = await _getAppInstanceId();
   }
 
   Future<String?> _getAppInstanceId() async {
     await Future.delayed(const Duration(seconds: 1));
-    return 'NA';
+    return null;
   }
 }
 
 class HmsPushImpl implements StorePush {
-  final _token = Completer<String>();
+  String? _token;
 
   @override
-  Future<String?> get token => _token.future;
+  String? get token => _token;
 
   PushNotificationStatus _permissionStatus =
       PushNotificationStatus.notDetermined;
@@ -92,10 +91,10 @@ class HmsPushImpl implements StorePush {
     Push.getToken('');
     Push.getTokenStream.listen(
       (token) {
-        _token.complete(token);
+        _token = token;
       },
       onError: (error) {
-        _token.completeError('NA');
+        _token = null;
       },
     );
   }
@@ -148,13 +147,13 @@ class HmsPushImpl implements StorePush {
 }
 
 class HmsAdsImpl implements StoreAds {
-  final _advertisingId = Completer<String>();
+  String? _advertisingId;
 
   @override
   final String advertisingType = 'OAID';
 
   @override
-  Future<String> get advertisingId async => _advertisingId.future;
+  String? get advertisingId => _advertisingId;
 
   Future<String?> _getAdvertisingId() async {
     try {
@@ -167,8 +166,7 @@ class HmsAdsImpl implements StoreAds {
 
   @override
   Future<void> init() async {
-    final id = await _getAdvertisingId();
-    _advertisingId.complete(id ?? 'NA');
+    _advertisingId = await _getAdvertisingId();
   }
 }
 
