@@ -3,7 +3,7 @@
 // Any changes to this file will be overwritten.
 
 abstract class StoreAnalytics {
-  Future<String> get appInstanceId;
+  String? get appInstanceId;
 
   Future<void> init();
 }
@@ -11,7 +11,7 @@ abstract class StoreAnalytics {
 abstract class StorePush {
   Future<void> init();
   Future<PushNotificationStatus> requestPermission();
-  Future<String?> get token;
+  String? get token;
   Future<PushNotificationStatus> get checkPermissionStatus;
   PushNotification? get initialMessage;
   Stream<PushNotification> get onMessageReceived;
@@ -21,7 +21,7 @@ abstract class StorePush {
 
 abstract class StoreAds {
   String get advertisingType;
-  Future<String> get advertisingId;
+  String? get advertisingId;
 
   Future<void> init();
 }

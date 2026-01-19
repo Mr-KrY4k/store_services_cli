@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import '../templates_embedded.dart';
 
 enum StoreMode { gms, hms, hybrid }
 
@@ -15,75 +16,49 @@ class AppCodeConfigurator {
       '🔧 Generating StoreService configuration for ${mode.name.toUpperCase()}...',
     );
 
-    final packageName = await _getPackageName();
-    final templatesDir = await _findTemplatesDir();
-
     // Ensure target directories exist
     await Directory(_targetDir).create(recursive: true);
     await Directory(_targetServicesDir).create(recursive: true);
 
     // 1. Copy Service Templates (Firebase/HMS)
     if (mode == StoreMode.gms || mode == StoreMode.hybrid) {
-      await _copyTemplate(
-        templatesDir,
-        'services/firebase_service.dart',
+      await _writeTemplate(
+        firebaseServiceTemplate,
         '$_targetServicesDir/firebase_service.dart',
-        packageName,
       );
     }
 
     if (mode == StoreMode.hms || mode == StoreMode.hybrid) {
-      await _copyTemplate(
-        templatesDir,
-        'services/hms_service.dart',
+      await _writeTemplate(
+        hmsServiceTemplate,
         '$_targetServicesDir/hms_service.dart',
-        packageName,
       );
     }
 
     // 2. Copy Interfaces
-    await _copyTemplate(
-      templatesDir,
-      'store_interfaces.dart',
+    await _writeTemplate(
+      storeInterfacesTemplate,
       p.join(_targetDir, 'store_interfaces.dart'),
-      packageName,
     );
 
     // 3. Generate StoreService
-    String templateName;
+    String templateContent;
     switch (mode) {
       case StoreMode.gms:
-        templateName = 'store_service_gms.dart';
+        templateContent = storeServiceGmsTemplate;
         break;
       case StoreMode.hms:
-        templateName = 'store_service_hms.dart';
+        templateContent = storeServiceHmsTemplate;
         break;
       case StoreMode.hybrid:
-        templateName = 'store_service_hybrid.dart';
+        templateContent = storeServiceHybridTemplate;
         break;
     }
 
-    await _copyTemplate(
-      templatesDir,
-      templateName,
-      _targetStoreService,
-      packageName,
-    );
+    await _writeTemplate(templateContent, _targetStoreService);
   }
 
-  Future<void> _copyTemplate(
-    Directory templatesDir,
-    String templateParam,
-    String targetPath,
-    String packageName,
-  ) async {
-    final templateFile = File('${templatesDir.path}/$templateParam');
-    if (!await templateFile.exists()) {
-      throw Exception('Template not found: ${templateFile.path}');
-    }
-
-    var content = await templateFile.readAsString();
-
+  Future<void> _writeTemplate(String content, String targetPath) async {
     // Add Warning Header
     const header = '''
 // GENERATED CODE - DO NOT MODIFY BY HAND
@@ -96,42 +71,6 @@ class AppCodeConfigurator {
     await targetFile.create(recursive: true);
     await targetFile.writeAsString(header + content);
     print('  ✅ Generated $targetPath');
-  }
-
-  Future<Directory> _findTemplatesDir() async {
-    // 1. Check current directory (dev mode)
-    if (await Directory('lib/templates').exists()) {
-      return Directory('lib/templates');
-    }
-    // 2. Check parent (if running from test/test_app)
-    if (await Directory('../../lib/templates').exists()) {
-      return Directory('../../lib/templates');
-    }
-    // 3. Check script location
-    final scriptDir = File(Platform.script.toFilePath()).parent;
-    // script is in bin/, templates in lib/templates which is ../lib/templates from bin
-    final fromScript = Directory('${scriptDir.parent.path}/lib/templates');
-    if (await fromScript.exists()) {
-      return fromScript;
-    }
-
-    throw Exception(
-      'Could not locate lib/templates directory. Checked: lib/templates, ../../lib/templates, ${fromScript.path}',
-    );
-  }
-
-  Future<String> _getPackageName() async {
-    final pubspec = File('pubspec.yaml');
-    if (!await pubspec.exists()) {
-      return 'app'; // fallback
-    }
-    final lines = await pubspec.readAsLines();
-    for (var line in lines) {
-      if (line.startsWith('name:')) {
-        return line.split(':')[1].trim();
-      }
-    }
-    return 'app';
   }
 
   Future<void> remove() async {
