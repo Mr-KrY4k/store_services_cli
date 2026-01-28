@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:huawei_ads/huawei_ads.dart';
 import 'package:huawei_push/huawei_push.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../store_interfaces.dart';
 
@@ -28,46 +27,6 @@ class HmsPushImpl implements StorePush {
 
   @override
   String? get token => _token;
-
-  PushNotificationStatus _permissionStatus =
-      PushNotificationStatus.notDetermined;
-
-  @override
-  PushNotificationStatus get permissionStatus => _permissionStatus;
-
-  final _permissionStatusReceived =
-      StreamController<PushNotificationStatus>.broadcast();
-
-  @override
-  Stream<PushNotificationStatus> get permissionStatusReceived =>
-      _permissionStatusReceived.stream;
-
-  @override
-  Future<PushNotificationStatus> get checkPermissionStatus async {
-    final status = await Permission.notification.status;
-    switch (status) {
-      case PermissionStatus.granted:
-        _permissionStatus = PushNotificationStatus.authorized;
-        break;
-      case PermissionStatus.denied:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-      case PermissionStatus.permanentlyDenied:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-      case PermissionStatus.restricted:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-      case PermissionStatus.limited:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-      case PermissionStatus.provisional:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-    }
-    _permissionStatusReceived.add(_permissionStatus);
-    return _permissionStatus;
-  }
 
   PushNotification? _initialMessage;
 
@@ -99,12 +58,6 @@ class HmsPushImpl implements StorePush {
     );
   }
 
-  @override
-  Future<PushNotificationStatus> requestPermission() async {
-    await Permission.notification.request();
-    return checkPermissionStatus;
-  }
-
   Future<void> _initInitialMessage() async {
     final message = await Push.getInitialNotification();
     if (message != null) {
@@ -112,7 +65,7 @@ class HmsPushImpl implements StorePush {
     }
   }
 
-  PushNotification _parsePushNotification(Map<String, dynamic> message) {
+  PushNotification _parsePushNotification(Map<Object?, Object?> message) {
     final extras = message['extras'] as Map<Object?, Object?>;
     return PushNotification(
       title: extras['title'] as String?,

@@ -44,28 +44,14 @@ class FirebasePushImpl implements StorePush {
   Stream<PushNotification> get onMessageReceived => _onMessageReceived.stream;
 
   @override
-  PushNotificationStatus get permissionStatus => _permissionStatus;
-
-  @override
-  Stream<PushNotificationStatus> get permissionStatusReceived =>
-      _permissionStatusReceived.stream;
-
-  @override
   String? get token => _token;
 
   final _messaging = FirebaseMessaging.instance;
 
   String? _token;
 
-  PushNotificationStatus _permissionStatus =
-      PushNotificationStatus.notDetermined;
-
-  final _permissionStatusReceived =
-      StreamController<PushNotificationStatus>.broadcast();
-
   @override
   Future<void> init() async {
-    _permissionStatusReceived.add(PushNotificationStatus.notDetermined);
     _token = await _getToken();
     await _initInitialMessage();
     _handleOnMessageReceived();
@@ -79,34 +65,6 @@ class FirebasePushImpl implements StorePush {
     } catch (e) {
       return null;
     }
-  }
-
-  @override
-  Future<PushNotificationStatus> get checkPermissionStatus async {
-    final settings = await _messaging.getNotificationSettings();
-    final status = settings.authorizationStatus;
-    switch (status) {
-      case AuthorizationStatus.authorized:
-        _permissionStatus = PushNotificationStatus.authorized;
-        break;
-      case AuthorizationStatus.provisional:
-        _permissionStatus = PushNotificationStatus.provisional;
-        break;
-      case AuthorizationStatus.denied:
-        _permissionStatus = PushNotificationStatus.denied;
-        break;
-      case AuthorizationStatus.notDetermined:
-        _permissionStatus = PushNotificationStatus.notDetermined;
-        break;
-    }
-    _permissionStatusReceived.add(_permissionStatus);
-    return _permissionStatus;
-  }
-
-  @override
-  Future<PushNotificationStatus> requestPermission() async {
-    await _messaging.requestPermission();
-    return await checkPermissionStatus;
   }
 
   Future<void> _initInitialMessage() async {

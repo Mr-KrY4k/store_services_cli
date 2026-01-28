@@ -6,13 +6,9 @@ abstract class StoreAnalytics {
 
 abstract class StorePush {
   Future<void> init();
-  Future<PushNotificationStatus> requestPermission();
   String? get token;
-  Future<PushNotificationStatus> get checkPermissionStatus;
   PushNotification? get initialMessage;
   Stream<PushNotification> get onMessageReceived;
-  Stream<PushNotificationStatus> get permissionStatusReceived;
-  PushNotificationStatus get permissionStatus;
 }
 
 abstract class StoreAds {
@@ -30,8 +26,6 @@ abstract class StoreRemoteConfig {
   double getDouble(String key);
   Map<String, dynamic> getAll();
 }
-
-enum PushNotificationStatus { authorized, denied, notDetermined, provisional }
 
 class PushNotification {
   const PushNotification({
